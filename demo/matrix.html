@@ -1,0 +1,299 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OBJ Room</title>
+    <meta charset="UTF-8">
+    <style>
+        html, body {
+            padding: 0px;
+            margin: 0px;
+        }
+        .main {
+            background: #426AA1;
+            margin: 0px;
+            padding: 0px;
+            position: absolute;
+            top: 0px;
+            bottom: 0px;
+            left: 0px;
+            right: 0px;
+        }
+        .formpane {
+            top: 20px;
+            right: 20px;
+            background: rgba(230, 230, 230, 0.5);
+        }
+    </style>
+    <script src="../lib/core/ht.js"></script>
+    <script src="../lib/plugin/ht-obj.js"></script>
+    <script src="../lib/plugin/ht-form.js"></script>
+    <script src="../lib/plugin/ht-modeling.js"></script>
+    <script>
+        var model = {}
+        var formPane = null
+
+        function init(){
+            dataModel = new ht.DataModel();
+            g3d = new ht.graph3d.Graph3dView(dataModel);
+            window.g3d = g3d
+
+            view = g3d.getView();
+            view.className = 'main';
+            document.body.appendChild(view);
+            window.addEventListener('resize', function (e) {
+                g3d.invalidate();
+            }, false);
+
+            g3d.setEye([0, 500, 1000]);
+            g3d.setCenter([0, 200, 0]);
+            g3d.setGridVisible(true);
+            g3d.setGridColor('#74AADA');
+            loadObj('E1',(node)=>{
+                model = node
+                createFormPane()
+
+                var oldEye = [
+                        1085.3580142679443,
+                        1537.6429064784563,
+                        1715.2009118865242
+                    ],
+                    oldCenter = g3d.getCenter().slice(0),
+                    newEye = [
+                        837.8325308681073,
+                        609.0753107142709,
+                        12.307703728589047
+                    ],
+                    newCenter = model.p3();
+
+                ht.Default.startAnim({
+                    delay: 100,
+                    duration: 1200,
+                    easing: function(t){
+                        return (t *= 2) < 1 ? 0.5 * t * t : 0.5 * (1 - (--t) * (t - 2));
+                    },
+                    action: function(k){
+                        g3d.setEye(
+                            oldEye[0] + (newEye[0] - oldEye[0]) * k,
+                            oldEye[1] + (newEye[1] - oldEye[1]) * k,
+                            oldEye[2] + (newEye[2] - oldEye[2]) * k
+                        );
+                        g3d.setCenter(
+                            oldCenter[0] + (newCenter[0] - oldCenter[0]) * k,
+                            oldCenter[1] + (newCenter[1] - oldCenter[1]) * k,
+                            oldCenter[2] + (newCenter[2] - oldCenter[2]) * k
+                        );
+                    }
+                });
+            });
+        }
+
+        function loadObj(name,cb){
+            ht.Default.loadObj('obj/equipment.obj', 'obj/equipment.mtl', {
+                r3: [0, Math.PI/2, 0],
+                s3: [2, 1.5, 1],
+                prefix: 'obj/',
+                center: true,
+                cube: true,
+                shape3d: name,
+                finishFunc: function(modelMap, array, rawS3){
+                    var node = new ht.Node();
+                    node.s({
+                        'shape3d': name,
+                        'wf.visible': 'selected',
+                        'wf.width': 3,
+                        'wf.color': '#F7F691'
+                    });
+                    node.s3(rawS3);
+                    node.p3(0, rawS3[1]/2, 0);
+                    node.a('initX',rawS3[0])
+                    node.a('initY',rawS3[1])
+                    node.a('initZ',rawS3[2])
+
+                    node.a('rotateX',0)
+                    node.a('rotateY',0)
+                    node.a('rotateZ',0)
+
+                    node.a('translateX',0)
+                    node.a('translateY',rawS3[1]/2)
+                    node.a('translateZ',0)
+                    dataModel.add(node);
+
+                    cb(node)
+                }
+            });
+        }
+
+        function createFormPane(){
+            formPane = new ht.widget.FormPane();
+            formPane.setWidth(200);
+            formPane.setHeight(400);
+            formPane.getView().className = 'formpane';
+            document.body.appendChild(formPane.getView());
+
+            formPane.addRow(['ScaleX',
+                {
+                    id: 'ScaleX',
+                    slider: {
+                        min: 0,
+                        max: 5,
+                        step: 0.1,
+                        value: 1,
+                        onValueChanged: function(){
+                            var value = this.getValue();
+                            const xyz = [model.a('initX') * value,model.a('initY'),model.a('initZ')]
+                            console.log(xyz)
+                            model.setSize3d(xyz);
+                        }
+                    }
+                }
+            ], [60, 0.1]);
+            formPane.addRow(['ScaleY',
+                {
+                    id: 'ScaleY',
+                    slider: {
+                        min: 0,
+                        max: 5,
+                        step: 0.1,
+                        value: 1,
+                        onValueChanged: function(){
+                            var value = this.getValue();
+                            const xyz = [model.a('initX'),model.a('initY') * value,model.a('initZ')]
+                            console.log(xyz)
+                            model.setSize3d(xyz);
+                        }
+                    }
+                }
+            ], [60, 0.1]);
+            formPane.addRow(['ScaleZ',
+                {
+                    id: 'ScaleZ',
+                    slider: {
+                        min: 0,
+                        max: 5,
+                        step: 0.1,
+                        value: 1,
+                        onValueChanged: function(){
+                            var value = this.getValue();
+                            const xyz = [model.a('initX'),model.a('initY'),model.a('initZ') * value]
+                            console.log(xyz)
+                            model.setSize3d(xyz);
+                        }
+                    }
+                }
+            ], [60, 0.1]);
+            formPane.addRow(['RotateX',
+                {
+                    id: 'RotateX',
+                    slider: {
+                        min: 0,
+                        max: 360,
+                        step: 1,
+                        value: 1,
+                        onValueChanged: function(){
+                            var value = this.getValue();
+                            model.a('rotateX',value * Math.PI/180)
+                            const xyz = [model.a('rotateX'),model.a('rotateY'),model.a('rotateZ')]
+                            console.log(xyz)
+                            model.setRotation3d(xyz);
+                        }
+                    }
+                }
+            ], [60, 0.1]);
+            formPane.addRow(['RotateY',
+                {
+                    id: 'RotateY',
+                    slider: {
+                        min: 0,
+                        max: 360,
+                        step: 1,
+                        value: 1,
+                        onValueChanged: function(){
+                            var value = this.getValue();
+                            model.a('rotateY',value * Math.PI/180)
+                            const xyz = [model.a('rotateX'),model.a('rotateY'),model.a('rotateZ')]
+                            console.log(xyz)
+                            model.setRotation3d(xyz)
+                        }
+                    }
+                }
+            ], [60, 0.1]);
+            formPane.addRow(['RotateZ',
+                {
+                    id: 'RotateZ',
+                    slider: {
+                        min: 0,
+                        max: 360,
+                        step: 1,
+                        value: 1,
+                        onValueChanged: function(){
+                            var value = this.getValue();
+                            model.a('rotateZ',value * Math.PI/180)
+                            const xyz = [model.a('rotateX'),model.a('rotateY'),model.a('rotateZ')]
+                            console.log(xyz)
+                            model.setRotation3d(xyz);
+                        }
+                    }
+                }
+            ], [60, 0.1]);
+
+            formPane.addRow(['translateX',
+                {
+                    id: 'translateX',
+                    slider: {
+                        min: -100,
+                        max: 100,
+                        step: 1,
+                        value: 1,
+                        onValueChanged: function(){
+                            var value = this.getValue();
+                            const xyz = [model.a('translateX') + value,model.a('translateY'),model.a('translateZ')]
+                            console.log(xyz)
+                            model.setPosition3d(xyz);
+                        }
+                    }
+                }
+            ], [60, 0.1]);
+            formPane.addRow(['translateY',
+                {
+                    id: 'translateY',
+                    slider: {
+                        min: -100,
+                        max: 100,
+                        step: 1,
+                        value: 1,
+                        onValueChanged: function(){
+                            var value = this.getValue();
+                            const xyz = [model.a('translateX') ,model.a('translateY')+ value,model.a('translateZ')]
+                            console.log(xyz)
+                            model.setPosition3d(xyz);
+                        }
+                    }
+                }
+            ], [60, 0.1]);
+            formPane.addRow(['translateZ',
+                {
+                    id: 'translateZ',
+                    slider: {
+                        min: -100,
+                        max: 100,
+                        step: 1,
+                        value: 1,
+                        onValueChanged: function(){
+                            var value = this.getValue();
+                            const xyz = [model.a('translateX'),model.a('translateY'),model.a('translateZ')+ value]
+                            console.log(xyz)
+                            model.setPosition3d(xyz);
+                        }
+                    }
+                }
+            ], [60, 0.1]);
+
+        }
+
+    </script>
+</head>
+<body onload="init();">
+</body>
+
+</html>
