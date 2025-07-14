@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OBJ Room</title>
+    <meta charset="UTF-8">
+    <style>
+        html, body {
+            padding: 0px;
+            margin: 0px;
+        }
+
+        .main {
+            background: #426AA1;
+            margin: 0px;
+            padding: 0px;
+            position: absolute;
+            top: 0px;
+            bottom: 0px;
+            left: 0px;
+            right: 0px;
+        }
+    </style>
+    <script src="../lib/core/ht.js"></script>
+    <script src="../lib/plugin/ht-obj.js"></script>
+    <script src="../lib/plugin/ht-modeling.js"></script>
+    <script type="module">
+        import gradual_red from '../lib/json/gradual_red.js'
+        let view, g3d, dataModel, propertyView, splitView, propertyModel
+        const width = 60
+
+        const poSuiFangHuZhao = {
+            shape3d: 'sphere',
+            'shape3d.image': '../lib/img/waterNormals.jpg',
+            '3d.clip.percentage': 0.512,
+            'shape3d.reverse.color': 'rgb(255,41,41)',
+            'headlight.ambientIntensity': 0.7,
+            'shape3d.reverse.flip': true,
+            'shape3d.reverse.cull': true,
+            'shape3d.opacity': 0.8,
+            'elevation': -95.52271,
+            'shape3d.uv.scale':[2,2],
+            'shape3d.uv.offset':[-0.3,0],
+            'body.color':'rgb(255,255,255)',
+            '3d.clip.direction': 'bottom',
+            'shape3d.transparent': true,
+            'envmap': 1,
+            'texture.cache': true,
+            '3d.selectable': false
+        }
+        function init() {
+            dataModel = new ht.DataModel();
+            g3d = new ht.graph3d.Graph3dView(dataModel);
+            propertyView = new ht.widget.PropertyView(dataModel);
+            splitView = new ht.widget.SplitView(g3d, propertyView);
+
+            view = splitView.getView();
+            view.className = 'main';
+            document.body.appendChild(view);
+            window.addEventListener('resize', function (e) {
+                splitView.invalidate();
+            }, false);
+
+            g3d.setEye([0, 700, 900]);
+            g3d.setGridVisible(true);
+            g3d.setGridColor('#74AADA');
+
+            const node1 = createNode([0, width / 2, 0], [width, width, width],'node1')
+            const node2 = createNode([0, width / 2, 0], [width, width, width],'node2')
+            node1.setName('Node 1');
+            node2.setName('Node 2');
+
+            setTimeout(()=>{
+                playAnim()
+            },1000)
+
+
+
+
+            dataModel.sm().ss(node1);
+            propertyModel = propertyView.getPropertyModel();
+
+            var property = new ht.Property();
+            property.setName('name');
+            property.setDisplayName('Name');
+            property.setAlign('center');
+            property.setEditable(true);
+            propertyModel.add(property);
+
+            property = new ht.Property();
+            property.setName('all.color');
+            property.setAccessType('style');
+            property.setValueType('color');
+            property.setCategoryName('Style Properties');
+            property.setEditable(true);
+            propertyModel.add(property);
+
+
+        }
+
+
+        /**
+         * 创建节点
+         * @param p3  设置位置
+         * @param s3  设置size
+         * @returns {*}
+         */
+        function createNode(p3, s3,id) {
+            // 默认ht.node是正方体
+            var node = new ht.Node();
+            node.p3(p3);
+            node.s3(s3);
+            node.s(poSuiFangHuZhao)
+            node.setId(id)
+            dataModel.add(node);
+            return node;
+        }
+
+        init()
+
+        function playAnim() {
+            let animConfig = {
+                duration: 3000,
+                easing: function (t) {
+                    return t
+                },
+                action: function (v,t) {
+                    let newWidth = width * 2
+                    dataModel.getDataById('node1').s('shape3d.opacity', Math.sin(v * Math.PI) )
+                    dataModel.getDataById('node2').s('shape3d.uv.offset', [v, 0] )
+                    dataModel.getDataById('node1').s('shape3d.uv.offset', [0, v] )
+                    // dataModel.getDataById('node1').s('3d.clip.percentage', 0.522 * v )
+                    dataModel.getDataById('node1').s3(newWidth*v,newWidth*v,newWidth*v)
+                },
+                finishFunc: function () {
+                    ht.Default.startAnim(animConfig)
+                }
+            }
+            ht.Default.startAnim(animConfig)
+        }
+
+
+    </script>
+</head>
+<!--<button onclick="playAnim" style="position: absolute;z-index: 999;top: 0;left: 0">动画</button>-->
+</body>
+</html>

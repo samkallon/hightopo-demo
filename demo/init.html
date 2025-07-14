@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OBJ Room</title>
+    <meta charset="UTF-8">
+    <style>
+        html, body {
+            padding: 0px;
+            margin: 0px;
+        }
+
+        .main {
+            background: #426AA1;
+            margin: 0px;
+            padding: 0px;
+            position: absolute;
+            top: 0px;
+            bottom: 0px;
+            left: 0px;
+            right: 0px;
+        }
+    </style>
+    <script src="../lib/core/ht.js"></script>
+    <script src="../lib/plugin/ht-obj.js"></script>
+    <script src="../lib/plugin/ht-modeling.js"></script>
+    <script>
+        let view, g3d, dataModel
+        function init() {
+            dataModel = new ht.DataModel();
+            g3d = new ht.graph3d.Graph3dView(dataModel);
+
+            view = g3d.getView();
+            view.className = 'main';
+            document.body.appendChild(view);
+            window.addEventListener('resize', function (e) {
+                g3d.invalidate();
+            }, false);
+
+            g3d.setEye([0, 700, 900]);
+            g3d.setGridVisible(true);
+            g3d.setGridColor('#74AADA');
+
+            const width = 60
+            createNode([0, width / 2, 0], [width, width, width]).s({
+                'all.color': '#f52525',
+                'label': 'node1',
+                'label.position': 3,
+                'label.background': 'yellow',
+            })
+
+
+        }
+
+
+        /**
+         * 创建节点
+         * @param p3  设置位置
+         * @param s3  设置size
+         * @returns {*}
+         */
+        function createNode(p3, s3) {
+            // 默认ht.node是正方体
+            var node = new ht.Node();
+            node.p3(p3);
+            node.s3(s3);
+            dataModel.add(node);
+            return node;
+        }
+
+
+    </script>
+</head>
+<body onload="init();">
+</body>
+</html>
